@@ -1,59 +1,107 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mera Personal AI</title>
+  <link rel="manifest" href="manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; background: #121212; color: #fff; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-    #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-    .msg { padding: 10px 14px; border-radius: 8px; max-width: 80%; line-height: 1.4; }
-    .user { background: #0078d4; align-self: flex-end; }
-    .bot { background: #2d2d2d; align-self: flex-start; }
-    #input-area { display: flex; padding: 10px; background: #1e1e1e; gap: 10px; }
-    input { flex: 1; padding: 12px; border-radius: 6px; border: none; outline: none; background: #2d2d2d; color: #fff; }
-    button { padding: 12px 20px; background: #0078d4; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background-color: #212121; color: #ececec; height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 14px 20px; background: #171717; border-bottom: 1px solid #303030; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 16px; font-weight: 600; color: #fff; }
+    #chat-box { flex: 1; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 18px; max-width: 800px; width: 100%; margin: 0 auto; }
+    .msg-row { display: flex; gap: 12px; width: 100%; }
+    .msg-row.user { justify-content: flex-end; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+    .bot-avatar { background: #10a37f; color: white; }
+    .bubble { max-width: 75%; padding: 12px 18px; border-radius: 16px; font-size: 15px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+    .user .bubble { background-color: #2f2f2f; color: #fff; border-bottom-right-radius: 4px; }
+    .bot .bubble { background-color: transparent; color: #ececec; }
+    #input-container { padding: 16px; background: #212121; display: flex; justify-content: center; }
+    .input-wrapper { max-width: 800px; width: 100%; position: relative; background: #2f2f2f; border-radius: 24px; padding: 6px 12px; display: flex; align-items: center; border: 1px solid #424242; }
+    textarea { width: 100%; background: transparent; border: none; outline: none; color: #fff; font-size: 15px; resize: none; max-height: 150px; padding: 8px 10px; font-family: inherit; }
+    button { background: #fff; color: #000; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-weight: bold; }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-  <div id="chat-box"></div>
-  <div id="input-area">
-    <input type="text" id="user-input" placeholder="Kuch bhi poochhein...">
-    <button onclick="sendMessage()">Send</button>
+  <header>
+    <h1>⚡ Personal AI Assistant</h1>
+  </header>
+
+  <div id="chat-box">
+    <div class="msg-row">
+      <div class="avatar bot-avatar">AI</div>
+      <div class="bubble bot">Namaste! Main aapka AI assistant hoon. Aaj main aapki kya madad kar sakta hoon?</div>
+    </div>
+  </div>
+
+  <div id="input-container">
+    <div class="input-wrapper">
+      <textarea id="user-input" rows="1" placeholder="Kuch bhi poochhein..." onkeydown="handleKey(event)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">↑</button>
+    </div>
   </div>
 
   <script>
-    const API_KEY = "AQ.Ab8RN6IkX4uznZkl7Gc5TaF-Yxosj8-DT2Uv4sEMCf7FXPpQrg";
+    // ⚠️ YAHAN APNI GOOGLE AI STUDIO KI SAHI API KEY DALEIN:
+    const API_KEY = "AQ.Ab8RN6IkX4uznZkl7Gc5TaF-Yxosj8-DT2Uv4sEMCf7FXPpQr";
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
 
     async function sendMessage() {
       const input = document.getElementById("user-input");
       const chatBox = document.getElementById("chat-box");
+      const sendBtn = document.getElementById("send-btn");
       const text = input.value.trim();
+
       if (!text) return;
 
-      chatBox.innerHTML += `<div class="msg user">${text}</div>`;
+      chatBox.innerHTML += `
+        <div class="msg-row user">
+          <div class="bubble">${text}</div>
+        </div>
+      `;
       input.value = "";
+      sendBtn.disabled = true;
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      const botMsg = document.createElement("div");
-      botMsg.className = "msg bot";
-      botMsg.innerText = "Soch raha hoon...";
-      chatBox.appendChild(botMsg);
+      const botRow = document.createElement("div");
+      botRow.className = "msg-row";
+      botRow.innerHTML = `
+        <div class="avatar bot-avatar">AI</div>
+        <div class="bubble bot" id="loading-msg">Soch raha hoon...</div>
+      `;
+      chatBox.appendChild(botRow);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
         });
+
         const data = await res.json();
-        botMsg.innerText = data.candidates[0].content.parts[0].text;
+
+        if (data.error) {
+          botRow.querySelector(".bubble").innerText = "Error: " + data.error.message;
+        } else {
+          botRow.querySelector(".bubble").innerText = data.candidates[0].content.parts[0].text;
+        }
       } catch (err) {
-        botMsg.innerText = "Error: API connect nahi ho saki.";
+        botRow.querySelector(".bubble").innerText = "Error: Network ya API connection fail ho gaya.";
       }
+
+      sendBtn.disabled = false;
       chatBox.scrollTop = chatBox.scrollHeight;
     }
   </script>
