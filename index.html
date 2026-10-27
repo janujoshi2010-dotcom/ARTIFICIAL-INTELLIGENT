@@ -15,12 +15,12 @@
     .brand-icon { width: 12px; height: 12px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
     
     .actions { display: flex; gap: 10px; }
-    .btn-secondary { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+    .btn-secondary { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: 0.2s; font-weight: 500; }
     .btn-secondary:hover { background: #3f3f46; }
 
     #chat-box { flex: 1; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; max-width: 820px; width: 100%; margin: 0 auto; }
     
-    .msg-group { display: flex; gap: 12px; width: 100%; animation: fadeIn 0.3s ease; }
+    .msg-group { display: flex; gap: 12px; width: 100%; animation: fadeIn 0.25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     
     .msg-group.user { justify-content: flex-end; }
@@ -60,7 +60,7 @@
   <div id="chat-box">
     <div class="msg-group bot">
       <div class="avatar bot-avatar">AI</div>
-      <div class="bubble bot">Namaste! Main aapka AI assistant hoon. Agar pehli baar use kar rahe hain, toh upar <b>"🔑 Set API Key"</b> button daba kar Google AI Studio ki key save karein, fir koi bhi sawal poochhein!</div>
+      <div class="bubble bot">Namaste! Main aapka AI assistant hoon. Upar <b>"🔑 Set API Key"</b> par click karke apni key dalein aur sawal poochhein!</div>
     </div>
   </div>
 
@@ -72,12 +72,22 @@
   </div>
 
   <script>
+    // Agar local storage khali ho toh default key set kar dega
+    const DEFAULT_KEY = "AQ.Ab8RN6KKmVJ5b1p5ckJOH_fzDrgYiMEx7U6Bhh-VaD4l4fgyqQ";
+
+    function getKey() {
+      return localStorage.getItem("gemini_user_api_key") || DEFAULT_KEY;
+    }
+
     function setupKey() {
-      const savedKey = localStorage.getItem("gemini_user_api_key") || "";
-      const userKey = prompt("Google AI Studio (aistudio.google.com) se copy ki hui API Key yahan dalein:", savedKey);
-      if (userKey !== null && userKey.trim() !== "") {
-        localStorage.setItem("gemini_user_api_key", userKey.trim());
-        alert("API Key save ho gayi hai!");
+      const savedKey = getKey();
+      const userKey = prompt("Apni API Key yahan paste karein:", savedKey);
+      if (userKey !== null) {
+        const cleaned = userKey.trim().replace(/\s+/g, "");
+        if (cleaned) {
+          localStorage.setItem("gemini_user_api_key", cleaned);
+          alert("Key successfully update ho gayi!");
+        }
       }
     }
 
@@ -85,7 +95,7 @@
       document.getElementById("chat-box").innerHTML = `
         <div class="msg-group bot">
           <div class="avatar bot-avatar">AI</div>
-          <div class="bubble bot">Chat clear kar di gayi hai. Aap dobara naya sawal poochh sakte hain.</div>
+          <div class="bubble bot">Chat clear kar di gayi hai.</div>
         </div>
       `;
     }
@@ -97,42 +107,30 @@
       }
     }
 
-    async function callGeminiAPI(apiKey, promptText) {
-      const models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-pro"];
-      let lastError = null;
+    async function callGemini(apiKey, text) {
+      // Wahi exact endpoint jo aapke curl command me tha
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+      
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: text }] }]
+        })
+      });
 
-      for (const model of models) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-          const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: promptText }] }]
-            })
-          });
-
-          const data = await response.json();
-          if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
-            return data.candidates[0].content.parts[0].text;
-          } else if (data.error) {
-            lastError = data.error.message;
-          }
-        } catch (err) {
-          lastError = err.message;
-        }
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || ("Error Code: " + res.status));
       }
-      throw new Error(lastError || "Connect nahi ho saka.");
+      return data.candidates[0].content.parts[0].text;
     }
 
     async function sendMessage() {
-      const apiKey = localStorage.getItem("gemini_user_api_key");
-      if (!apiKey) {
-        alert("Pehle upar '🔑 Set API Key' par click karke API Key dalein!");
-        setupKey();
-        return;
-      }
-
+      const apiKey = getKey();
       const input = document.getElementById("user-input");
       const chatBox = document.getElementById("chat-box");
       const sendBtn = document.getElementById("send-btn");
@@ -159,12 +157,12 @@
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const reply = await callGeminiAPI(apiKey, text);
+        const reply = await callGemini(apiKey, text);
         botGroup.querySelector(".bubble").innerText = reply;
       } catch (err) {
         const bubble = botGroup.querySelector(".bubble");
         bubble.className = "bubble bot error";
-        bubble.innerText = "Error: " + err.message + "\n\n(Tip: Agar API key expire/block ho gayi ho, toh '🔑 Set API Key' par click karke nayi key dalein.)";
+        bubble.innerText = "Error: " + err.message;
       }
 
       sendBtn.disabled = false;
