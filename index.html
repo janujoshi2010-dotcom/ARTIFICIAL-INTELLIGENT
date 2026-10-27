@@ -8,54 +8,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background-color: #212121; color: #ececec; height: 100vh; display: flex; flex-direction: column; }
-    header { padding: 14px 20px; background: #171717; border-bottom: 1px solid #303030; display: flex; align-items: center; justify-content: space-between; }
-    header h1 { font-size: 16px; font-weight: 600; color: #fff; }
-    .api-btn { background: #333; color: #fff; border: 1px solid #555; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-    #chat-box { flex: 1; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 18px; max-width: 800px; width: 100%; margin: 0 auto; }
-    .msg-row { display: flex; gap: 12px; width: 100%; }
-    .msg-row.user { justify-content: flex-end; }
-    .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
-    .bot-avatar { background: #10a37f; color: white; }
-    .bubble { max-width: 75%; padding: 12px 18px; border-radius: 16px; font-size: 15px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
-    .user .bubble { background-color: #2f2f2f; color: #fff; border-bottom-right-radius: 4px; }
-    .bot .bubble { background-color: transparent; color: #ececec; }
-    #input-container { padding: 16px; background: #212121; display: flex; justify-content: center; }
-    .input-wrapper { max-width: 800px; width: 100%; position: relative; background: #2f2f2f; border-radius: 24px; padding: 6px 12px; display: flex; align-items: center; border: 1px solid #424242; }
-    textarea { width: 100%; background: transparent; border: none; outline: none; color: #fff; font-size: 15px; resize: none; max-height: 150px; padding: 8px 10px; font-family: inherit; }
-    button#send-btn { background: #fff; color: #000; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-weight: bold; }
-    button:disabled { opacity: 0.3; cursor: not-allowed; }
+    body { font-family: 'Inter', sans-serif; background-color: #18181b; color: #f4f4f5; height: 100vh; display: flex; flex-direction: column; }
+    
+    header { padding: 14px 24px; background: #09090b; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; }
+    .brand-icon { width: 12px; height: 12px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+    
+    .actions { display: flex; gap: 10px; }
+    .btn-secondary { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+    .btn-secondary:hover { background: #3f3f46; }
+
+    #chat-box { flex: 1; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; max-width: 820px; width: 100%; margin: 0 auto; }
+    
+    .msg-group { display: flex; gap: 12px; width: 100%; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .msg-group.user { justify-content: flex-end; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .bot-avatar { background: #2563eb; color: #fff; }
+    
+    .bubble { max-width: 80%; padding: 12px 18px; border-radius: 16px; font-size: 15px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+    .user .bubble { background-color: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+    .bot .bubble { background-color: #27272a; color: #f4f4f5; border-bottom-left-radius: 4px; border: 1px solid #3f3f46; }
+    .bubble.error { background-color: #451a1a; border-color: #7f1d1d; color: #fca5a5; }
+
+    #input-container { padding: 16px 20px 24px; background: #18181b; display: flex; justify-content: center; }
+    .input-wrapper { max-width: 820px; width: 100%; position: relative; background: #27272a; border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; border: 1px solid #3f3f46; }
+    .input-wrapper:focus-within { border-color: #2563eb; }
+    
+    textarea { width: 100%; background: transparent; border: none; outline: none; color: #fff; font-size: 15px; resize: none; max-height: 120px; padding: 6px 8px; font-family: inherit; }
+    textarea::placeholder { color: #71717a; }
+    
+    button#send-btn { background: #2563eb; color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 16px; font-weight: bold; transition: 0.2s; }
+    button#send-btn:hover { background: #1d4ed8; }
+    button#send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>⚡ Personal AI Assistant</h1>
-    <button class="api-btn" onclick="setupKey()">🔑 Set API Key</button>
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <span>Personal AI Assistant</span>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" onclick="setupKey()">🔑 Set API Key</button>
+      <button class="btn-secondary" onclick="clearChat()">🗑️ Clear</button>
+    </div>
   </header>
 
   <div id="chat-box">
-    <div class="msg-row">
+    <div class="msg-group bot">
       <div class="avatar bot-avatar">AI</div>
-      <div class="bubble bot">Namaste! Main aapka AI assistant hoon. Upar diye gaye "🔑 Set API Key" button par click karke apni Google AI Studio ki key save karein.</div>
+      <div class="bubble bot">Namaste! Main aapka AI assistant hoon. Agar pehli baar use kar rahe hain, toh upar <b>"🔑 Set API Key"</b> button daba kar Google AI Studio ki key save karein, fir koi bhi sawal poochhein!</div>
     </div>
   </div>
 
   <div id="input-container">
     <div class="input-wrapper">
-      <textarea id="user-input" rows="1" placeholder="Kuch bhi poochhein..." onkeydown="handleKey(event)"></textarea>
-      <button id="send-btn" onclick="sendMessage()">↑</button>
+      <textarea id="user-input" rows="1" placeholder="Yahan apna sawal likhein... (Enter daba kar bhejein)" onkeydown="handleKey(event)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">➤</button>
     </div>
   </div>
 
   <script>
     function setupKey() {
-      const currentKey = localStorage.getItem("my_gemini_key") || "";
-      const userKey = prompt("Apni Google AI Studio ki API Key yahan paste karein:", currentKey);
-      if (userKey) {
-        localStorage.setItem("my_gemini_key", userKey.trim());
-        alert("API Key successfully save ho gayi!");
+      const savedKey = localStorage.getItem("gemini_user_api_key") || "";
+      const userKey = prompt("Google AI Studio (aistudio.google.com) se copy ki hui API Key yahan dalein:", savedKey);
+      if (userKey !== null && userKey.trim() !== "") {
+        localStorage.setItem("gemini_user_api_key", userKey.trim());
+        alert("API Key save ho gayi hai!");
       }
+    }
+
+    function clearChat() {
+      document.getElementById("chat-box").innerHTML = `
+        <div class="msg-group bot">
+          <div class="avatar bot-avatar">AI</div>
+          <div class="bubble bot">Chat clear kar di gayi hai. Aap dobara naya sawal poochh sakte hain.</div>
+        </div>
+      `;
     }
 
     function handleKey(e) {
@@ -65,10 +97,38 @@
       }
     }
 
+    async function callGeminiAPI(apiKey, promptText) {
+      const models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-pro"];
+      let lastError = null;
+
+      for (const model of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }]
+            })
+          });
+
+          const data = await response.json();
+          if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
+            return data.candidates[0].content.parts[0].text;
+          } else if (data.error) {
+            lastError = data.error.message;
+          }
+        } catch (err) {
+          lastError = err.message;
+        }
+      }
+      throw new Error(lastError || "Connect nahi ho saka.");
+    }
+
     async function sendMessage() {
-      const apiKey = localStorage.getItem("my_gemini_key");
+      const apiKey = localStorage.getItem("gemini_user_api_key");
       if (!apiKey) {
-        alert("Pehle upar 'Set API Key' button par click karke apni API key dalein!");
+        alert("Pehle upar '🔑 Set API Key' par click karke API Key dalein!");
         setupKey();
         return;
       }
@@ -81,7 +141,7 @@
       if (!text) return;
 
       chatBox.innerHTML += `
-        <div class="msg-row user">
+        <div class="msg-group user">
           <div class="bubble">${text}</div>
         </div>
       `;
@@ -89,31 +149,22 @@
       sendBtn.disabled = true;
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      const botRow = document.createElement("div");
-      botRow.className = "msg-row";
-      botRow.innerHTML = `
+      const botGroup = document.createElement("div");
+      botGroup.className = "msg-group bot";
+      botGroup.innerHTML = `
         <div class="avatar bot-avatar">AI</div>
         <div class="bubble bot">Soch raha hoon...</div>
       `;
-      chatBox.appendChild(botRow);
+      chatBox.appendChild(botGroup);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-          botRow.querySelector(".bubble").innerText = "API Error: " + data.error.message;
-        } else {
-          botRow.querySelector(".bubble").innerText = data.candidates[0].content.parts[0].text;
-        }
+        const reply = await callGeminiAPI(apiKey, text);
+        botGroup.querySelector(".bubble").innerText = reply;
       } catch (err) {
-        botRow.querySelector(".bubble").innerText = "Network Error: Internet ya URL connection check karein.";
+        const bubble = botGroup.querySelector(".bubble");
+        bubble.className = "bubble bot error";
+        bubble.innerText = "Error: " + err.message + "\n\n(Tip: Agar API key expire/block ho gayi ho, toh '🔑 Set API Key' par click karke nayi key dalein.)";
       }
 
       sendBtn.disabled = false;
